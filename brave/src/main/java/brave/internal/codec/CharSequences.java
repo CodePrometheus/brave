@@ -8,10 +8,13 @@ package brave.internal.codec;
  * Most of our parsing tools accept {@link CharSequence} instead of {@link String} to avoid
  * unnecessary allocation. This contains common functions available on {@link String}, preferring
  * signatures that match our utilities such as {@link EntrySplitter}.
+ * 大多数解析工具接受 {@link CharSequence} 而不是 {@link String}，以避免不必要的分配。
+ * 这包含了 {@link String} 上可用的常见函数，优先使用与我们的实用程序（如 {@link EntrySplitter}）匹配的签名。
  */
 public final class CharSequences {
   /**
    * Returns true if the input range contains only the expected characters.
+   * 如果输入范围仅包含预期的字符，则返回 true。
    *
    * @param expected   characters to search for in the input
    * @param input      charSequence to search for {@code expected}

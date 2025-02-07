@@ -7,9 +7,11 @@ package brave;
 /**
  * Epoch microseconds used for {@link brave.Span#start(long)}, {@link brave.Span#finish(long)} and
  * {@link brave.Span#annotate(long, String)}.
+ * 用于 {@link brave.Span#start(long)}、{@link brave.Span#finish(long)} 和 {@link brave.Span#annotate(long, String)} 的纪元微秒。
  *
  * <p>This should use the most precise value possible. For example, {@code gettimeofday} or
  * multiplying {@link System#currentTimeMillis} by 1000.
+ * 这应该使用可能的最精确值。例如，{@code gettimeofday} 或将 {@link System#currentTimeMillis} 乘以 1000。
  *
  * <p>See <a href="https://zipkin.io/pages/instrumenting.html">Instrumenting a service</a> for
  * more.

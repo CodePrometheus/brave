@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 /**
  * Access to platform-specific features.
+ * 访问特定于平台的功能。
  *
  * <p>Note: Logging is centralized here to avoid classloader problems.
  *

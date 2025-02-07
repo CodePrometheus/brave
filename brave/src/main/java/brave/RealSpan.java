@@ -150,6 +150,7 @@ final class RealSpan extends Span {
   /**
    * This also matches equals against a lazy span. The rationale is least surprise to the user, as
    * code should not act differently given an instance of lazy or {@link RealSpan}.
+   * 也可以与LazySpan进行比较，这对用户并不奇怪，因为给定 lazy 或 {@link RealSpan} 的实例，代码不应该采取不同的行为。
    */
   @Override public boolean equals(Object o) {
     if (o == this) return true;

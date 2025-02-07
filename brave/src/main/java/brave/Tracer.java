@@ -109,6 +109,7 @@ public class Tracer {
 
   /**
    * Explicitly creates a new trace. The result will be a root span (no parent span ID).
+   * 显式创建一个新的跟踪。结果将是一个根跨度（没有父跨度 ID）。
    *
    * <p>To implicitly create a new trace, or a span within an existing one, use {@link
    * #nextSpan()}.
@@ -121,13 +122,17 @@ public class Tracer {
    * Joining is re-using the same trace and span ids extracted from an incoming RPC request. This
    * should not be used for messaging operations, as {@link #nextSpan(TraceContextOrSamplingFlags)}
    * is a better choice.
+   * 加入是重用从传入的 RPC 请求中提取的相同跟踪和跨度 ID。这不应用于消息传递操作，因为 TraceContextOrSamplingFlags 是更好的选择
    *
    * <p>When this incoming context is sampled, we assume this is a shared span, one where the
    * caller and the current tracer report to the same span IDs. If no sampling decision occurred
    * yet, we have exclusive access to this span ID.
+   * 当传入的上下文被采样时，我们假设这是一个共享跨度，调用者和当前跟踪器报告相同的跨度 ID。
+   * 如果尚未进行采样决策，我们对此跨度 ID 拥有独占访问权。
    *
    * <p>Here's an example of conditionally joining a span, depending on if a trace context was
    * extracted from an incoming request.
+   * 以下是根据是否从传入请求中提取了跟踪上下文来有条件地加入跨度的示例。
    *
    * <pre>{@code
    * extracted = extractor.extract(request);
@@ -168,9 +173,11 @@ public class Tracer {
   /**
    * Explicitly creates a child within an existing trace. The result will be have its parent ID set
    * to the input's span ID. If a sampling decision has not yet been made, one will happen here.
-   *
+   * 显式在现有跟踪中创建一个子跨度
+   * 结果将其父 ID 设置为输入的跨度 ID。如果尚未进行采样决策，将在此处进行
    * <p>To implicitly create a new trace, or a span within an existing one, use {@link
    * #nextSpan()}.
+   * 要隐式创建新的跟踪或现有跟踪中的跨度，请使用 nextSpan
    */
   public Span newChild(TraceContext parent) {
     if (parent == null) throw new NullPointerException("parent == null");
@@ -179,16 +186,20 @@ public class Tracer {
 
   TraceContext newRootContext(int flags) {
     flags &= ~FLAG_SHARED; // cannot be shared if we aren't reusing the span ID
+    System.out.println("flags = " + flags);
     return decorateContext(flags, 0L, 0L, 0L, 0L, 0L, Collections.emptyList());
   }
 
   /**
    * Decorates a context after backfilling any missing data such as span IDs or sampling state.
-   *
+   * 在回填任何缺失的数据（如跨度 ID 或采样状态）后装饰上下文。
+   * 
    * <p>Called by methods which can accept externally supplied parent trace contexts: Ex. {@link
    * #newChild(TraceContext)} and {@link #startScopedSpanWithParent(String, TraceContext)}. This
    * implies the {@link TraceContext#localRootId()} could be zero, if the context was manually
    * created.
+   * 由可以接受外部提供的父跟踪上下文的方法调用：例如 newChild 和 startScopedSpanWithParent
+   * 这意味着 localRootId 可能为零，如果上下文是手动创建的。
    */
   TraceContext decorateContext(TraceContext parent, long parentId) {
     int flags = InternalPropagation.instance.flags(parent);
@@ -210,6 +221,9 @@ public class Tracer {
    * such as the "local root". Finally, decoration hooks apply to ensure any propagation state are
    * added to the "extra" section of the result. This supports functionality like baggage
    * propagation.
+   * 创建一个包含以下字段的跟踪上下文对象。当缺少诸如跨度 ID 之类的字段时，它们将被回填。
+   * 然后，将应用跟踪器管理的任何缺失状态，例如“local root”
+   * 最后，使用装饰钩子以确保任何传播状态都添加到结果的“extra”部分。这支持类似行李传播的功能。
    *
    * <p>All parameters except span ID can be empty in the case of a new root span.
    *
@@ -270,6 +284,9 @@ public class Tracer {
    * always result in a new span. If no trace identifiers were extracted, a span will be created
    * based on the implicit context in the same manner as {@link #nextSpan()}. If a sampling decision
    * has not yet been made, one will happen here.
+   * 这将基于从传入请求中提取的参数创建一个新的跨度。这将始终导致创建一个新的跨度。
+   * 如果没有提取到跟踪标识符，则将根据与 nextSpan 相同的方式中的隐式上下文创建一个跨度。
+   * 如果尚未进行采样决策，将在此处进行
    *
    * <p>Ex.
    * <pre>{@code
@@ -280,10 +297,13 @@ public class Tracer {
    * <p><em>Note:</em> Unlike {@link #joinSpan(TraceContext)}, this does not attempt to re-use
    * extracted span IDs. This means the extracted context (if any) is the parent of the span
    * returned.
+   * 与 joinSpan 不同，它不尝试重用提取的跨度 ID。这意味着提取的上下文（如果有）是返回的跨度的父级。
    *
    * <p><em>Note:</em> If a context could be extracted from the input, that trace is resumed, not
    * whatever the {@link #currentSpan()} was. Make sure you re-apply {@link #withSpanInScope(Span)}
    * so that data is written to the correct trace.
+   * 如果可以从输入中提取上下文，则恢复该跟踪，而不是 currentSpan。
+   * 确保重新应用 withSpanInScope，以便将数据写入正确的跟踪。
    *
    * @see Propagation
    * @see Extractor#extract(Object)
@@ -293,11 +313,14 @@ public class Tracer {
   // partial result, such as trace id without span ID without declaring a special type. Also, the
   // the code is a bit easier to work with especially if we want to avoid excess allocations. Here,
   // we manually code some things to keep the cpu and allocations low, at the cost of readability.
+  // 根据 union 类型来创建 span
   public Span nextSpan(TraceContextOrSamplingFlags extracted) {
     if (extracted == null) throw new NullPointerException("extracted == null");
+    // 先判断是不是完整的TraceContext
     TraceContext context = extracted.context();
-    if (context != null) return newChild(context);
+    if (context != null) return newChild(context); // 已经有一个正在进程的跟踪
 
+    // 再判断是不是TraceIdContext
     TraceIdContext traceIdContext = extracted.traceIdContext();
     if (traceIdContext != null) {
       return _toSpan(null, decorateContext(
@@ -311,15 +334,18 @@ public class Tracer {
       ));
     }
 
+    // 如果以上都不是，那么一定是SamplingFlags
     SamplingFlags samplingFlags = extracted.samplingFlags();
     List<Object> extra = extracted.extra();
 
+    // 判断当前环境是否存在已知的TraceContext，将其认作隐式的父Span
     TraceContext parent = currentTraceContext.get();
     int flags;
     long traceIdHigh = 0L, traceId = 0L, localRootId = 0L, spanId = 0L;
     if (parent != null) {
       // At this point, we didn't extract trace IDs, but do have a trace in progress. Since typical
       // trace sampling is up front, we retain the decision from the parent.
+      // 在这一点上，我们没有提取跟踪 ID，但正在进行跟踪。由于典型的跟踪采样是最前面的，我们保留父级的决策。
       flags = InternalPropagation.instance.flags(parent);
       traceIdHigh = parent.traceIdHigh();
       traceId = parent.traceId();
@@ -327,14 +353,19 @@ public class Tracer {
       spanId = parent.spanId();
       extra = concat(extra, parent.extra());
     } else {
+      // // 否则的话，遵照SamplingFlags中指定的flags
       flags = InternalPropagation.instance.flags(samplingFlags);
     }
+    
+    // 创建一个新的Span
+    // 如果这里的TraceID和SpanID都为空，会在decorateContext方法中对其进行补全
     return _toSpan(parent,
       decorateContext(flags, traceIdHigh, traceId, localRootId, spanId, 0L, extra));
   }
 
   /**
    * Converts the context to a Span object after decorating it for propagation.
+   * 将上下文转换为 Span 对象，并对其进行传播装饰。
    *
    * <p>This api is not advised for routine use. It is better to hold a reference to a span created
    * elsewhere vs rely on implicit lookups.
@@ -343,6 +374,9 @@ public class Tracer {
     return toSpan(null, context);
   }
 
+  /**
+   * Converts the context to a Span object after decorating it for propagation.
+   */
   Span toSpan(@Nullable TraceContext parent, TraceContext context) {
     // Re-use a pending context if present: This ensures reference consistency on Span.context()
     TraceContext pendingContext = swapForPendingContext(context);
@@ -386,12 +420,14 @@ public class Tracer {
    * Makes the given span the "current span" and returns an object that exits that scope on close.
    * Calls to {@link #currentSpan()} and {@link #currentSpanCustomizer()} will affect this span
    * until the return value is closed.
+   * 使给定的跨度成为“当前跨度”，并返回一个在关闭时退出该范围的对象。
+   * 对 currentSpan 和 currentSpanCustomizer 的调用将影响此跨度，直到返回值被关闭。
    *
    * <p>The most convenient way to use this method is via the try-with-resources idiom.
-   *
+   * 使用此方法的最方便的方法是通过 try-with-resources 习惯用法。
    * Ex.
    * <pre>{@code
-   * // Assume a framework interceptor uses this method to set the inbound span as current
+   * // Assume a framework interceptor uses this method to set the inbound span as current 将入站跨度设置为当前
    * try (SpanInScope scope = tracer.withSpanInScope(span)) {
    *   return inboundRequest.invoke();
    * // note: try-with-resources closes the scope *before* the catch block
@@ -402,7 +438,7 @@ public class Tracer {
    *   span.finish();
    * }
    *
-   * // An unrelated framework interceptor can now lookup the correct parent for outbound requests
+   * // An unrelated framework interceptor can now lookup the correct parent for outbound requests 无关的框架拦截器现在可以查找出站请求的正确父级
    * Span parent = tracer.currentSpan()
    * Span span = tracer.nextSpan().name("outbound").start(); // parent is implicitly looked up
    * try (SpanInScope scope = tracer.withSpanInScope(span)) {
@@ -418,13 +454,17 @@ public class Tracer {
    *
    * <p>When tracing in-process commands, prefer {@link #startScopedSpan(String)} which scopes by
    * default.
+   * 在跟踪进程中的命令时，请使用 startScopedSpan，它默认为作用域。
    *
    * <p>Note: While downstream code might affect the span, calling this method, and calling close
    * on the result have no effect on the input. For example, calling close on the result does not
    * finish the span. Not only is it safe to call close, you must call close to end the scope, or
    * risk leaking resources associated with the scope.
+   * 注意：尽管下游代码可能会影响跨度，但调用此方法以及调用结果上的 close 对输入没有影响。
+   * 例如，在结果上调用 close 不会完成跨度。不仅可以安全地调用 close，还必须调用 close 来结束作用域，否则可能会泄漏与作用域相关的资源。
    *
-   * @param span span to place into scope or null to clear the scope
+   * @param span span to place into scope or null to clear the scope 用于放入范围的跨度，或 null 以清除范围
+   * 确保在代码块中进行的所有操作都可以被追踪到相同的跨度上，从而实现分布式追踪
    */
   public SpanInScope withSpanInScope(@Nullable Span span) {
     return new SpanInScope(currentTraceContext.newScope(span != null ? span.context() : null));
@@ -432,13 +472,17 @@ public class Tracer {
 
   /**
    * Returns a customizer for current span in scope or noop if there isn't one.
+   * 返回范围内当前跨度的自定义器，如果没有，则返回 noop。
    *
    * <p>Unlike {@link CurrentSpanCustomizer}, this represents a single span. Accordingly, this
    * reference should not be saved as a field. That said, it is more efficient to save this result
    * as a method-local variable vs repeated calls.
+   * 与 CurrentSpanCustomizer 不同，这代表一个单独的跨度。因此，不应将此引用保存为字段。
+   * 也就是说，将此结果保存为方法局部变量比重复调用更有效。
    */
   public SpanCustomizer currentSpanCustomizer() {
-    // note: we don't need to decorate the context for propagation as it is only used for toString
+    // note: we don't need to decorate the context for propagation as it is only used for toString 
+    // 注意：我们不需要为传播装饰上下文，因为它仅用于 toString
     TraceContext context = currentTraceContext.get();
     if (context == null || isNoop(context)) return NoopSpanCustomizer.INSTANCE;
     return new SpanCustomizerShield(toSpan(context));
@@ -446,20 +490,24 @@ public class Tracer {
 
   /**
    * Returns the current span in scope or null if there isn't one.
+   * 返回范围内的当前跨度，如果没有，则返回 null。
    *
    * <p>When entering user code, prefer {@link #currentSpanCustomizer()} as it is a stable type and
    * will never return null.
+   * 进入用户代码时，请使用 currentSpanCustomizer，因为它是一个稳定的类型，永远不会返回 null。
    */
   @Nullable public Span currentSpan() {
     TraceContext context = currentTraceContext.get();
     if (context == null) return null;
     // Returns a lazy span to reduce overhead when tracer.currentSpan() is invoked just to see if
     // one exists, or when the result is never used.
+    // 当调用 tracer.currentSpan() 只是为了查看是否存在，或者结果从未使用时，返回一个惰性跨度以减少开销。
     return new LazySpan(this, context);
   }
 
   /**
    * Returns a new child span if there's a {@link #currentSpan()} or a new trace if there isn't.
+   * 返回一个新的子跨度，如果有 currentSpan，或者如果没有，则返回一个新的跟踪。
    *
    * <p>Prefer {@link #startScopedSpan(String)} if you are tracing a synchronous function or code
    * block.
@@ -472,6 +520,8 @@ public class Tracer {
   /**
    * Returns a new child span if there's a {@link #currentSpan()} or a new trace if there isn't. The
    * result is the "current span" until {@link ScopedSpan#finish()} is called.
+   * 如果有 currentSpan，则返回一个新的子跨度，否则返回一个新的跟踪。
+   * 结果是“当前跨度”，直到调用 ScopedSpan.finish() 为止。
    *
    * Here's an example:
    * <pre>{@code
@@ -488,12 +538,15 @@ public class Tracer {
    * }</pre>
    */
   public ScopedSpan startScopedSpan(String name) {
-    return startScopedSpanWithParent(name, currentTraceContext.get());
+    TraceContext traceContext = currentTraceContext.get();
+    System.out.println("my|startScopedSpan traceContext = " + traceContext);
+    return startScopedSpanWithParent(name, traceContext);
   }
 
   /**
    * Like {@link #startScopedSpan(String)} except when there is no trace in process, the sampler
    * {@link SamplerFunction#trySample(Object) triggers} against the supplied argument.
+   * 与 startScopedSpan 类似，但是如果没有正在进行的跟踪，则采样器会针对提供的参数触发。
    *
    * @param name the {@link Span#name(String) span name}
    * @param samplerFunction invoked if there's no {@link CurrentTraceContext#get() current trace}
@@ -510,6 +563,7 @@ public class Tracer {
   /**
    * Like {@link #nextSpan()} except when there is no trace in process, the sampler {@link
    * SamplerFunction#trySample(Object) triggers} against the supplied argument.
+   * 与 nextSpan 类似，但是如果没有正在进行的跟踪，则采样器会针对提供的参数触发。
    *
    * @param samplerFunction invoked if there's no {@link CurrentTraceContext#get() current trace}
    * @param arg parameter to {@link SamplerFunction#trySample(Object)}
@@ -526,6 +580,7 @@ public class Tracer {
    * Like {@link #nextSpan(SamplerFunction, Object)} except this controls the parent context
    * explicitly. This is useful when an invocation context is propagated manually, commonly the case
    * with asynchronous client frameworks.
+   * 与 nextSpan 类似，但是这明确控制父上下文。当调用上下文手动传播时，这是有用的，通常是异步客户端框架的情况。
    *
    * @param samplerFunction invoked if there's no {@link CurrentTraceContext#get() current trace}
    * @param arg parameter to {@link SamplerFunction#trySample(Object)}
@@ -550,6 +605,7 @@ public class Tracer {
 
   /**
    * Same as {@link #startScopedSpan(String)}, except ignores the current trace context.
+   * 与 startScopedSpan 类似，但忽略当前跟踪上下文。
    *
    * <p>Use this when you are creating a scoped span in a method block where the parent was
    * created. You can also use this to force a new trace by passing null parent.
@@ -573,11 +629,14 @@ public class Tracer {
     return new RealScopedSpan(context, scope, state, clock, pendingSpans);
   }
 
-  /** A span remains in the scope it was bound to until close is called. */
+  /** 
+   * A span remains in the scope it was bound to until close is called. 
+   * span 将保留在其绑定的范围内，直到调用 close 为止
+   */
   public static final class SpanInScope implements Closeable {
     final Scope scope;
 
-    // This type hides the SPI type and allows us to double-check the SPI didn't return null.
+    // This type hides the SPI type and allows us to double-check the SPI didn't return null. 此类型隐藏了 SPI 类型，并允许我们双重检查 SPI 没有返回 null。
     SpanInScope(Scope scope) {
       if (scope == null) throw new NullPointerException("scope == null");
       this.scope = scope;

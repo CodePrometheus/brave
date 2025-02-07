@@ -15,6 +15,7 @@ import static brave.internal.Throwables.propagateIfFatal;
 /**
  * This is a centralized type to parse a tag into any variant of a span. This also avoids the
  * clutter of checking null or guarding on exceptions.
+ * 这是一个集中的类型，用于将标签解析为跨度的任何变体。 这也避免了检查null或在异常上保护的混乱。
  *
  * Here's an example of a potentially expensive tag:
  * <pre>{@code

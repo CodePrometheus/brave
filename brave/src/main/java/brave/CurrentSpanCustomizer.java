@@ -6,6 +6,7 @@ package brave;
 
 /**
  * Provides a mechanism for end users to be able to customise the current span.
+ * 为最终用户提供一种能够定制当前跨度的机制
  *
  * <p>Handles the case of there being no current span in scope.
  */

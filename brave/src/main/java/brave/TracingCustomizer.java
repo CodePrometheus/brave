@@ -10,16 +10,21 @@ import brave.propagation.CurrentTraceContextCustomizer;
 
 /**
  * This allows configuration plugins to collaborate on building an instance of {@link Tracing}.
+ * 这允许配置插件协作构建 {@link Tracing} 实例。
  *
  * <p>For example a customizer can configure {@linkplain Tracing.Builder#addSpanHandler(SpanHandler)
  * span handlers} without having to also configure the {@linkplain Tracing.Builder#localServiceName(String)
  * local service name}.
+ * 例如，自定义器可以配置 {@linkplain Tracing.Builder#addSpanHandler(SpanHandler) span 处理器}，
+ * 而无需配置 {@linkplain Tracing.Builder#localServiceName(String) local service name}。
  *
  * <h3>Integration examples</h3>
  *
  * <p>In practice, a dependency injection tool applies a collection of these instances prior to
  * {@link Tracing.Builder#build() building the tracing instance}. For example, an injected {@code
  * List<TracingCustomizer>} parameter to a provider of {@link Tracing}.
+ * 在实践中，依赖注入工具在 {@link Tracing.Builder#build() 构建跟踪实例} 之前应用这些实例的集合。
+ * 例如，一个提供 {@link Tracing} 的提供者的注入 {@code List<TracingCustomizer>} 参数。
  *
  * <p>Here are some examples, in alphabetical order:
  * <pre><ul>

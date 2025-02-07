@@ -9,6 +9,7 @@ import brave.internal.Nullable;
 
 /**
  * Decides whether to start a new trace based on request properties such as an HTTP path.
+ * 根据请求属性（例如HTTP路径）决定是否启动新的跟踪
  *
  * <p>Ex. Here's a sampler that only traces api requests
  * <pre>{@code

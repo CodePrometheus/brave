@@ -16,6 +16,7 @@ import static brave.internal.codec.HexCodec.writeHexLong;
 /**
  * Contains inbound trace ID and sampling flags, used when users control the root trace ID, but not
  * the span ID (ex Amazon X-Ray or other correlation).
+ * 包含入站跟踪 ID 和采样标志，当用户控制根跟踪 ID 但不控制跨度 ID 时使用（例如 Amazon X-Ray 或其他相关性）。
  */
 //@Immutable
 public final class TraceIdContext extends SamplingFlags {

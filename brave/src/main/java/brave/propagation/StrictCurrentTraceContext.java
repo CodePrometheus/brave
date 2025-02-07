@@ -12,6 +12,7 @@ import java.io.Closeable;
  *
  * <p>For example, it is instance scoped as opposed to static scoped, not inheritable and throws an
  * exception if a scope is closed on a different thread that it was opened on.
+ * 例如，它是实例范围的，而不是静态范围的，不可继承，并且如果在打开的线程上关闭范围，则会引发异常。
  *
  * @see StrictScopeDecorator
  */

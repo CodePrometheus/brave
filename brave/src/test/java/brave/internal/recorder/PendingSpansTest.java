@@ -127,6 +127,7 @@ class PendingSpansTest {
     // Prove that copy constructor doesn't pin GC
     MutableSpan copyOfData = new MutableSpan(span.span);
     span = null; // clear reference so GC occurs
+    // 移除对span的引用，那么在gc触发的时候span及其关联的Context1就会被回收
 
     TraceContext context2 = context.toBuilder().traceId(2).spanId(2).build();
     pendingSpans.getOrCreate(null, context2, false);

@@ -10,6 +10,7 @@ import brave.internal.Nullable;
 
 /**
  * Abstract response type used for parsing.
+ * 用于解析的抽象响应类型。
  *
  * <h3>No extensions outside Brave</h3>
  * While this is an abstract type, it should not be subclassed outside the Brave repository. In

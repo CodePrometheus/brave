@@ -21,10 +21,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This means there's no bookkeeping thread required in order to flush orphaned spans. Work here is
  * stolen from callers, though. For example, a call to {@link Tracer#nextSpan()} implicitly performs
  * a check for orphans, invoking any handler that applies.
+ * 类似于 Finagle 的截止时间跨度映射，不同之处在于这是 GC 压力，而不是超时驱动。
+ * 这意味着不需要簿记线程来刷新孤立的跨度。这里的工作是从调用者那里偷来的。
+ * 例如，对 {@link Tracer#nextSpan()} 的调用隐式地检查了孤立的跨度，调用了任何适用的处理程序。
  *
  * <p>Spans are weakly referenced by their owning context. When the keys are collected, they are
  * transferred to a queue, waiting to be reported. A call to modify any span will implicitly flush
  * orphans to Zipkin. Spans in this state will have a "brave.flush" annotation added to them.
+ * 跨度由其拥有的上下文弱引用。当键被收集时，它们将被转移到一个队列中，等待报告。对任何跨度的修改调用将隐式地刷新孤立的跨度到 Zipkin。
+ * 处于这种状态的跨度将被添加一个 "brave.flush" 注释。
  */
 public final class PendingSpans extends WeakConcurrentMap<TraceContext, PendingSpan> {
   final MutableSpan defaultSpan;

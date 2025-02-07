@@ -25,9 +25,12 @@ import static brave.internal.baggage.ExtraBaggageContext.findExtra;
 
 /**
  * This implements in-process and remote {@linkplain BaggageField baggage} propagation.
- *
+ * 实现了 进程内（In-Process） 和 远程（Remote） 的 Baggage 传播
+ * 
  * <p>For example, if you have a need to know the specific request's country code, you can
  * propagate it through the trace as HTTP headers.
+ * 例如，如果您需要知道特定请求的国家代码，您可以通过跟踪将其作为 HTTP 标头传播。
+ * 
  * <pre>{@code
  * import brave.baggage.BaggagePropagationConfig.SingleBaggageField;
  *
@@ -51,6 +54,8 @@ import static brave.internal.baggage.ExtraBaggageContext.findExtra;
  * {@link SingleBaggageField#remote(BaggageField)} sets the name used as a propagation key (header)
  * to the lowercase variant of the field name. You can override this by supplying different key
  * names. Note: they will be lower-cased.
+ * SingleBaggageField#remote(BaggageField) 设置用作传播键（标头）的名称为字段名称的小写变体。
+ * 您可以通过提供不同的键名称来覆盖此行为。注意：它们将被转换为小写。
  *
  * <p>For example, the following will propagate the field "x-vcap-request-id" as-is, but send the
  * fields "countryCode" and "userId" on the wire as "baggage-country-code" and "baggage-user-id"

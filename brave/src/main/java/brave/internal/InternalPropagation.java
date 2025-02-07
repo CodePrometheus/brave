@@ -8,6 +8,7 @@ import brave.ScopedSpan;
 import brave.Span;
 import brave.propagation.SamplingFlags;
 import brave.propagation.TraceContext;
+
 import java.util.List;
 
 /**
@@ -21,21 +22,23 @@ public abstract class InternalPropagation {
    * A flags bitfield is used internally inside {@link TraceContext} as opposed to several booleans.
    * This reduces the size of the object and allows us to set or check a couple states at once.
    */
-  public static final int FLAG_SAMPLED = 1 << 1;
-  public static final int FLAG_SAMPLED_SET = 1 << 2;
-  public static final int FLAG_DEBUG = 1 << 3;
-  public static final int FLAG_SHARED = 1 << 4;
-  public static final int FLAG_SAMPLED_LOCAL = 1 << 5;
-  public static final int FLAG_LOCAL_ROOT = 1 << 6;
+  public static final int FLAG_SAMPLED = 1 << 1; // 2
+  public static final int FLAG_SAMPLED_SET = 1 << 2; // 4
+  public static final int FLAG_DEBUG = 1 << 3; // 8
+  public static final int FLAG_SHARED = 1 << 4; // 16
+  public static final int FLAG_SAMPLED_LOCAL = 1 << 5; // 32
+  public static final int FLAG_LOCAL_ROOT = 1 << 6; // 64
 
   public static InternalPropagation instance;
 
   public abstract int flags(SamplingFlags flags);
 
   public static int sampled(boolean sampled, int flags) {
+    // 如果sampled为True表示接受采样，会同时设置FLAG_SAMPLED以及FLAG_SAMPLED_SET为1，用位或运算
     if (sampled) {
       flags |= FLAG_SAMPLED | FLAG_SAMPLED_SET;
     } else {
+      // 如果拒绝采样，会同时设置FLAG_SAMPLED=0以及FLAG_SAMPLED_SET=1
       flags |= FLAG_SAMPLED_SET;
       flags &= ~FLAG_SAMPLED;
     }

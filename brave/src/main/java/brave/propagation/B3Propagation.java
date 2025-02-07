@@ -194,6 +194,7 @@ public abstract class B3Propagation<K> implements Propagation<K> {
 
   /**
    * "1" implies sampled and is a request to override collection-tier sampling policy.
+   * "1" 表示采样，并且是一个请求，用于覆盖集合层采样策略。
    */
   static final String FLAGS = "X-B3-Flags";
 
@@ -252,14 +253,20 @@ public abstract class B3Propagation<K> implements Propagation<K> {
     @Override public TraceContextOrSamplingFlags extract(R request) {
       if (request == null) throw new NullPointerException("request == null");
 
-      // try to extract single-header format
+      // try to extract single-header format 
+      // 首先尝试Single Header
       String b3 = getter.get(request, B3);
       TraceContextOrSamplingFlags extracted = b3 != null ? parseB3SingleFormat(b3) : null;
       if (extracted != null) return extracted;
 
       // Start by looking at the sampled state as this is used regardless
       // Official sampled value is 1, though some old instrumentation send true
+      // 检查`X-B3-Sampled`字段，为了兼容性同时判断数字0/1和布尔值true/false
       String sampled = getter.get(request, SAMPLED);
+      // 这里使用Boolean类型是为了标记三种采样状态
+      // - null: Defer
+      // - True: Accept
+      // - False: Deny
       Boolean sampledV;
       if (sampled == null) {
         sampledV = null; // defer decision
@@ -285,11 +292,14 @@ public abstract class B3Propagation<K> implements Propagation<K> {
 
       // The only flag we action is 1, but it could be that any integer is present.
       // Here, we leniently parse as debug is not a primary consideration of the trace context.
+      // 检查`X-B3-Flags: 1`，是否是Debug状态
       boolean debug = "1".equals(getter.get(request, FLAGS));
 
       String traceIdString = getter.get(request, TRACE_ID);
 
       // It is ok to go without a trace ID, if sampling or debug is set
+      // 允许出现TraceID不存在的情况，此时创建一个仅包含Sampled和Debug状态的SamplingFlags
+      // 所以 type 均为 3
       if (traceIdString == null) {
         if (debug) return TraceContextOrSamplingFlags.DEBUG;
         if (sampledV != null) {
@@ -306,6 +316,7 @@ public abstract class B3Propagation<K> implements Propagation<K> {
           && result.parseParentId(getter, request, PARENT_SPAN_ID)) {
         if (sampledV != null) result.sampled(sampledV.booleanValue());
         if (debug) result.debug(true);
+        // 试图创建一个完整的TraceContext
         return TraceContextOrSamplingFlags.create(result.build());
       }
       return TraceContextOrSamplingFlags.EMPTY; // trace context is malformed so return empty

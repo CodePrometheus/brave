@@ -20,9 +20,15 @@ import static java.util.Collections.emptyList;
 /**
  * Union type that contains only one of trace context, trace ID context or sampling flags. This type
  * is designed for use with {@link Tracer#nextSpan(TraceContextOrSamplingFlags)}.
+ * 联合类型，只包含跟踪上下文、跟踪 ID 上下文或采样标志中的一个。
+ * 此类型设计用于与 {@link Tracer#nextSpan(TraceContextOrSamplingFlags)} 一起使用。
+ * TraceContext: 对应完整的上下文信息, type=1
+ * TraceIdContext: 仅包含TraceID, type=2
+ * SamplingFlags: 仅包含flags, type=3
  *
  * <p>Users should not create instances of this, rather use {@link Extractor} provided
  * by a {@link Propagation} implementation such as {@link Propagation#B3_STRING}.
+ * 用户不应创建此类的实例，而应使用 {@link Propagation} 实现提供的 {@link Extractor}，例如 {@link Propagation#B3_STRING}。
  *
  * <p>Those implementing {@link Propagation} should use the following advice:
  * <pre><ul>
@@ -52,6 +58,8 @@ public final class TraceContextOrSamplingFlags {
    * Used to implement {@link Extractor#extract(Object)} for a format that can extract a complete
    * {@link TraceContext}, including a {@linkplain TraceContext#traceIdString() trace ID} and
    * {@linkplain TraceContext#spanIdString() span ID}.
+   * 用于实现 {@link Extractor#extract(Object)}，用于可以提取完整的 {@link TraceContext} 的格式，
+   * 包括 {@linkplain TraceContext#traceIdString() trace ID} 和 {@linkplain TraceContext#spanIdString() span ID}。
    *
    * @see #context()
    * @see #newBuilder(TraceContext)
@@ -66,6 +74,8 @@ public final class TraceContextOrSamplingFlags {
    * Used to implement {@link Extractor#extract(Object)} when the format allows extracting a
    * {@linkplain TraceContext#traceIdString() trace ID} without a {@linkplain
    * TraceContext#spanIdString() span ID}
+   * 用于实现 {@link Extractor#extract(Object)}
+   * 当格式允许提取 {@linkplain TraceContext#traceIdString() trace ID} 而不包含 {@linkplain TraceContext#spanIdString() span ID} 时
    *
    * @see #traceIdContext()
    * @see #newBuilder(TraceIdContext)
@@ -79,6 +89,7 @@ public final class TraceContextOrSamplingFlags {
   /**
    * Used to implement {@link Extractor#extract(Object)} when the format allows extracting only
    * {@linkplain SamplingFlags sampling flags}.
+   * 用于实现 {@link Extractor#extract(Object)}，当格式允许提取只存在 {@linkplain SamplingFlags sampling flags} 时。
    *
    * @see #samplingFlags()
    * @see #newBuilder(TraceIdContext)
@@ -174,6 +185,7 @@ public final class TraceContextOrSamplingFlags {
    * Returns non-{@code null} when both a {@linkplain TraceContext#traceIdString() trace ID} and
    * {@linkplain TraceContext#spanIdString() span ID} were  {@link Extractor#extract(Object)
    * extracted} from a request.
+   * 当从请求中提取了 {@linkplain TraceContext#traceIdString() trace ID} 和 {@linkplain TraceContext#spanIdString() span ID} 时，返回非 null。
    *
    * <p>For example, given the header "b3: 80f198ee56343ba864fe8b2a57d3eff7-e457b5a2e4d86bd1-1",
    * {@link B3Propagation} extracts the following:
@@ -190,6 +202,8 @@ public final class TraceContextOrSamplingFlags {
    * @since 4.0
    */
   @Nullable public TraceContext context() {
+    // 判断是不是完整的 TraceContext 也就是包含 TraceId 和 SpanId
+    // 否则返回 null
     return type == 1 ? (TraceContext) value : null;
   }
 
@@ -197,6 +211,8 @@ public final class TraceContextOrSamplingFlags {
    * Returns non-{@code null} when a {@linkplain TraceIdContext#traceIdString() trace ID} was {@link
    * Extractor#extract(Object) extracted} from a request, but a {@linkplain
    * TraceContext#spanIdString() span ID} was not.
+   * 当从请求中提取了 {@linkplain TraceIdContext#traceIdString() trace ID}
+   * \但没有提取到 {@linkplain TraceContext#spanIdString() span ID} 时，返回非 null。
    *
    * <p>For example, given the header "x-amzn-trace-id: Root=1-5759e988-bd862e3fe1be46a994272793",
    * <a href="https://github.com/openzipkin/zipkin-aws/tree/master/brave-propagation-aws">AWSPropagation</a>
@@ -219,6 +235,7 @@ public final class TraceContextOrSamplingFlags {
   /**
    * Returns non-{@code null} when a {@linkplain TraceContext#traceIdString() trace ID} was not
    * {@link Extractor#extract(Object) extracted} from a request.
+   * 当从请求中没有提取到 {@linkplain TraceContext#traceIdString() trace ID} 时，返回非 null。
    *
    * <p>For example, given the header "b3: 1", {@link B3Propagation} extracts {@link #SAMPLED}.
    *
@@ -305,10 +322,15 @@ public final class TraceContextOrSamplingFlags {
      * This is an advanced function used for {@link Propagation} plugins, such as
      * {@link BaggagePropagation}, to add an internal object to hold state before extracting a
      * remote request.
+     * 这是一个高级函数，用于 {@link Propagation} 插件，例如 {@link BaggagePropagation}，
+     * 用于在提取远程请求之前添加一个内部对象来保存状态。
      *
      * <p>Implications of data are the same as {@link TraceContext.Builder#addExtra(Object)}. The
      * main difference here is that {@link Extractor#extract(Object)} may not result in a trace
      * context. For example, baggage fields can exist without an incoming trace.
+     * 数据的影响与 {@link TraceContext.Builder#addExtra(Object)} 相同。
+     * 这里的主要区别在于 {@link Extractor#extract(Object)} 可能不会导致跟踪上下文。
+     * 例如，行李物品字段可以存在而没有传入的跟踪。
      *
      * @see TraceContextOrSamplingFlags#extra()
      * @see TraceContext.Builder#addExtra(Object)

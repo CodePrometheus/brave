@@ -79,4 +79,14 @@ final class RealScopedSpan extends ScopedSpan {
     h ^= scope.hashCode();
     return h;
   }
+
+  @Override public String toString() {
+    return "RealScopedSpan{" +
+        "context=" + context +
+        ", scope=" + scope +
+        ", state=" + state +
+        ", clock=" + clock +
+        ", pendingSpans=" + pendingSpans +
+        '}';
+  }
 }

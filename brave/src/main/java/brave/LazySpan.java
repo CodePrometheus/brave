@@ -9,9 +9,11 @@ import brave.propagation.TraceContext;
 
 /**
  * This defers creation of a span until first public method call.
+ * 直到第一次调用公共方法之前，才会创建 span。
  *
  * <p>This type was created to reduce overhead for code that calls {@link Tracer#currentSpan()},
  * but without ever using the result.
+ * 该类型是为了减少调用 {@link Tracer#currentSpan()} 的代码的开销，但是从来没有使用结果。
  */
 final class LazySpan extends Span {
   final Tracer tracer;
@@ -125,6 +127,9 @@ final class LazySpan extends Span {
    * there is no state risk if {@link Tracer#toSpan(TraceContext)} is called concurrently. Duplicate
    * instances of span may occur, but they would share the same {@link MutableSpan} instance
    * internally.
+   * 这不会在所有并发边缘情况下保护分配委托字段。这是因为这种类型仅在用户调用 {@link Tracer#currentSpan()} 时使用，
+   * 这种情况不太可能以多线程的方式暴露出来，以便多个线程在分配字段时发生竞争。最后，如果同时调用 {@link Tracer#toSpan(TraceContext)}，
+   * 则没有状态风险。可能会出现 span 的重复实例，但它们在内部共享相同的 {@link MutableSpan} 实例。
    */
   Span span() {
     Span result = delegate;

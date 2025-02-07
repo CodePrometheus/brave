@@ -9,6 +9,7 @@ import brave.Tracing;
 import brave.internal.Nullable;
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -16,9 +17,11 @@ import java.util.concurrent.ExecutorService;
 /**
  * This makes a given span the current span by placing it in scope (usually but not always a thread
  * local scope).
+ * 通过将给定的 span 放入作用域（通常但并非总是线程本地作用域）来使其成为当前 span。
  *
  * <p>This type is an SPI, and intended to be used by implementors looking to change thread-local
  * storage, or integrate with other contexts such as logging (MDC).
+ * 这种类型是 SPI，旨在供实现者使用，以更改线程本地存储，或与其他上下文集成，例如日志记录（MDC）。
  *
  * <h3>Design</h3>
  *
@@ -108,21 +111,31 @@ public abstract class CurrentTraceContext {
    * only in conditions where redundancy is possible and the intent is primarily to facilitate
    * {@link Tracer#currentSpan}. Most often, this is used to eliminate redundant scopes by
    * wrappers.
+   * 与{@link #newScope(TraceContext)}类似，但如果给定的上下文已经在作用域中，则返回{@link Scope#NOOP}。
+   * 这可以减少在作用域回调时的开销。 但是，这不会应用任何更改，特别是在{@link TraceContext#extra()}中。
+   * 因此，应谨慎使用，并且仅在可能存在冗余的情况下使用，主要目的是促进{@link Tracer#currentSpan}。
+   * 最常见的情况是通过包装器消除冗余作用域。
    *
    * <p>For example, RxJava includes hooks to wrap types that represent an asynchronous functional
    * composition. For example, {@code flowable.parallel().flatMap(Y).sequential()} Assembly hooks
    * can ensure each stage of this operation can see the initial trace context. However, other tools
    * can also instrument the stages, including vert.x or even agent instrumentation. When wrapping
    * callbacks, it can reduce overhead to use {@code maybeScope} as opposed to {@code newScope}.
+   * 例如，RxJava包含用于包装表示异步功能组合的类型的钩子。 例如，{@code flowable.parallel().flatMap(Y).sequential()}。
+   * 组装钩子可以确保此操作的每个阶段都可以看到初始跟踪上下文。 但是，其他工具也可以对阶段进行仪器化，包括vert.x甚至代理仪器化。
+   * 在包装回调时，使用{@code maybeScope}而不是{@code newScope}可以减少开销。
    *
    * <p>Generally speaking, this is best used for wrappers, such as executor services or lifecycle
    * hooks, which usually have no current trace context when invoked.
+   * 一般来说，这最适合用于包装器，例如执行程序服务或生命周期钩子，在调用时通常没有当前跟踪上下文。
    *
    * <h3>Implementors note</h3>
    * <p>For those overriding this method, you must compare {@link TraceContext#traceIdHigh()},
    * {@link TraceContext#traceId()} and {@link TraceContext#spanId()} to decide if the contexts are
    * equivalent. Due to details of propagation, other data like parent ID are not considered in
    * equivalence checks.
+   * 对于那些重写此方法的人，您必须比较{@link TraceContext#traceIdHigh()}，{@link TraceContext#traceId()}和{@link TraceContext#spanId()}，
+   * 以决定上下文是否等效。 由于传播的细节，其他数据（如父ID）不会在等效性检查中考虑在内。
    *
    * @param context span to place into scope or null to clear the scope
    * @return a new scope object or {@link Scope#NOOP} if the input is already the case
@@ -133,7 +146,10 @@ public abstract class CurrentTraceContext {
     return newScope(context);
   }
 
-  /** A span remains in the scope it was bound to until close is called. */
+  /** 
+   * A span remains in the scope it was bound to until close is called.
+   * 区别在于 Scope 会一直保持到 close 被调用。
+   */
   public interface Scope extends Closeable {
     /**
      * Returned when {@link CurrentTraceContext#maybeScope(TraceContext)} detected scope
@@ -155,12 +171,16 @@ public abstract class CurrentTraceContext {
   /**
    * Use this to add features such as thread checks or log correlation when a scope is created or
    * closed.
+   * 使用此功能可在创建或关闭作用域时添加功能，例如线程检查或日志相关性。
    *
    * <p>While decoration technically occurs with {@link #newScope(TraceContext)} or
    * {@link #maybeScope(TraceContext)}, many tools use these underneath. For example, {@link
    * brave.Tracer#startScopedSpan(String)} and {@link brave.Tracer#withSpanInScope(brave.Span)} set
    * a span in scope. An executor wrapped with {@link #executor(Executor)} would decorate each
    * runnable.
+   * 虽然装饰技术上发生在{@link #newScope(TraceContext)}或{@link #maybeScope(TraceContext)}中，
+   * 但许多工具在这些工具下使用这些工具。 例如，{@link brave.Tracer#startScopedSpan(String)}和{@link brave.Tracer#withSpanInScope(brave.Span)}设置了一个跟踪范围。
+   * 使用{@link #executor(Executor)}包装的执行程序将装饰每个可运行项。
    *
    * @since 5.2
    */
@@ -189,19 +209,26 @@ public abstract class CurrentTraceContext {
 
   /**
    * Default implementation which is backed by a static thread local.
+   * 默认实现，由静态线程本地支持。
    *
    * <p>A static thread local ensures we have one context per thread, as opposed to one per thread-
    * tracer. This means all tracer instances will be able to see any tracer's contexts.
+   * 静态线程本地确保我们每个线程有一个上下文，而不是每个线程-跟踪器。 这意味着所有跟踪器实例都可以看到任何跟踪器的上下文。
    *
    * <p>The trade-off of this (instance-based reference) vs the reverse: trace contexts are not
    * separated by tracer by default. For example, to make a trace invisible to another tracer, you
    * have to use a non-default implementation.
+   * 这种（基于实例的引用）与反向之间的权衡：跟踪上下文默认情况下不会按跟踪器分开。 
+   * 例如，要使跟踪对另一个跟踪器不可见，您必须使用非默认实现。
    *
    * <p>Sometimes people make different instances of the tracer just to change configuration like
    * the local service name. If we used a thread-instance approach, none of these would be able to
    * see eachother's scopes. This would break {@link Tracing#currentTracer()} scope visibility in a
    * way few would want to debug. It might be phrased as "MySQL always starts a new trace and I
    * don't know why."
+   * 有时，人们只是为了更改本地服务名称等配置而制作跟踪器的不同实例。
+   * 如果我们使用线程实例方法，那么这些实例将无法看到彼此的作用域。 这将以一种很少有人想要调试的方式破坏{@link Tracing#currentTracer()}作用域可见性。
+   * 它可能被表述为“MySQL总是开始新的跟踪，我不知道为什么。”
    *
    * <p>If you want a different behavior, use a different subtype of {@link CurrentTraceContext},
    * possibly your own, or raise an issue and explain what your use case is.

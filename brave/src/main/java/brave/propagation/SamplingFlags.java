@@ -56,6 +56,8 @@ public class SamplingFlags {
    * Sampled means send span data to Zipkin (or something else compatible with its data). It is a
    * consistent decision for an entire request (trace-scoped). For example, the value should not
    * move from true to false, even if the decision itself can be deferred.
+   * 采样意味着将 span 数据发送到 Zipkin（或与其数据兼容的其他地方）。这是整个请求的一致决策（跟踪范围）。
+   * 例如，即使决策本身可以推迟，值也不应该从 true 移动到 false。
    *
    * <p>Here are the valid options:
    * <pre><ul>
@@ -63,15 +65,22 @@ public class SamplingFlags {
    *   <li>False means the trace should not be reported</li>
    *   <li>Null means the decision should be deferred to the next hop</li>
    * </ul></pre>
+   * 这里有一些有效的选项：
+   * True 表示报告跟踪，从第一个将值设置为 true 的 span 开始报告
+   * False 表示不应报告跟踪
+   * Null 表示决策应推迟到下一个跳转
    *
    * <p>Once set to true or false, it is expected that this decision is propagated and honored
    * downstream.
+   * 一旦设置为 true 或 false，预期此决策将被传播并在下游得到尊重
    *
    * <p>Note: sampling does not imply the trace is invisible to others. For example, a common
    * practice is to generate and propagate identifiers always. This allows other systems, such as
    * logging, to correlate even when the tracing system has no data.
+   * 注意：采样并不意味着跟踪对其他人不可见。例如，一种常见的做法是始终生成和传播标识符。这允许其他系统（例如日志记录）进行关联，即使跟踪系统没有数据。
    */
   @Nullable public final Boolean sampled() {
+    System.out.println("flags = " + flags);
     return (flags & FLAG_SAMPLED_SET) == FLAG_SAMPLED_SET
       ? (flags & FLAG_SAMPLED) == FLAG_SAMPLED
       : null;

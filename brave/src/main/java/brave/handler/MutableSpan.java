@@ -24,23 +24,31 @@ import static brave.internal.codec.JsonWriter.UTF_8;
 
 /**
  * This represents a span except for its {@link TraceContext}. It is mutable, for late adjustments.
+ * 这个类表示一个span，除了它的{@link TraceContext}。它是可变的，用于后期调整。
  *
  * <h3>Notes</h3>
  * <p>Between {@link SpanHandler#begin(TraceContext, MutableSpan, TraceContext)} and
  * {@link SpanHandler#end(TraceContext, MutableSpan, SpanHandler.Cause)}, Brave owns this reference,
  * synchronizing where necessary as updates come from different application threads.
+ * 在{@link SpanHandler#begin(TraceContext, MutableSpan, TraceContext)}和{@link SpanHandler#end(TraceContext, MutableSpan, SpanHandler.Cause)}之间
+ * Brave拥有这个引用，根据需要同步，因为更新来自不同的应用程序线程。
  *
  * <p>Upon end, Brave no longer makes updates. It invokes each {@link SpanHandler}, one-by-one on
  * the same thread. This means subsequent handlers do not have to synchronize to view updates from a
  * prior one. However, it does imply they must make mutations on the same thread.
+ * 在结束时，Brave不再进行更新。它依次在同一线程上调用每个{@link SpanHandler}。这意味着后续处理程序不必同步以查看来自先前处理程序的更新。
+ * 但是，这意味着他们必须在同一线程上进行突变。
  *
  * <p>In other words, this type is not thread safe. If you need to mutate this span in a different
  * thread, use the {@linkplain #MutableSpan(MutableSpan) copy constructor}.
+ * 换句话说，这种类型不是线程安全的。如果您需要在不同的线程中修改这个span，请使用{@linkplain #MutableSpan(MutableSpan)}。
  *
  * <h3>MutableSpan.error() vs MutableSpan.tag("error")</h3>
  * If {@link #tag(String)} returns a result for "error", it was from a layered api, instrumentation
  * or the user. {@link #error()} is usually an uncaught exception and does not imply there's a tag
  * "error".
+ * 如果{@link #tag(String)}为"error"返回结果，则是来自分层api、插桩或用户。
+ * {@link #error()}通常是未捕获的异常，并不意味着有一个标签"error"。
  *
  * <p>Here are examples of a span with {@link #error()}, but no "error" tag:
  * <ul>
@@ -52,6 +60,8 @@ import static brave.internal.codec.JsonWriter.UTF_8;
  * <p>The above are examples of exceptions that users typically do not process, so are unlikely to
  * parse into an "error" tag. The opposite is also true as not all errors are derived from
  * {@link Throwable}. Particularly, RPC frameworks often do not use exceptions as error signals.
+ * 上面的例子是用户通常不处理的异常，因此不太可能解析为"error"标签。
+ * 反之亦然，因为并非所有的错误都是从{@link Throwable}派生的。特别是，RPC框架通常不使用异常作为错误信号。
  *
  * <p>Here are examples of a span with an "error" tag, but no {@link #error()}:
  * <ul>
@@ -64,6 +74,9 @@ import static brave.internal.codec.JsonWriter.UTF_8;
  * Since there is no default "error" tag, span handlers here can tell the difference between
  * explicitly set error messages, and what's needed by their format. For example, those only looking
  * at Zipkin clones may forget that {@link #error()} exists for custom formats including metrics!
+ * 上面的例子使用了Brave中的in-band api。{@link SpanHandler}是事后。
+ * 由于没有默认的"error"标签，因此这里的span处理程序可以区分显式设置的错误消息和其格式所需的内容。
+ * 例如，那些只查看Zipkin克隆的人可能会忘记{@link #error()}存在于包括指标在内的自定义格式中！
  *
  * <p>Here are examples of {@link SpanHandler#end(TraceContext, MutableSpan, SpanHandler.Cause)}
  * implementations that process errors:
@@ -76,6 +89,8 @@ import static brave.internal.codec.JsonWriter.UTF_8;
  * In summary, Brave intentionally does not default an "error" {@link #tag(String)} from
  * {@link #error()}. This allows {@link SpanHandler} instances that report data be as simple as an
  * error bit, or advanced enough to keep a stacktrace and also a user tag.
+ * 总之，Brave故意不从{@link #error()}默认"error" {@link #tag(String)}。
+ * 这允许报告数据的{@link SpanHandler}实例尽可能简单，只需一个错误位，或者足够先进，以保留堆栈跟踪和用户标签。
  *
  * @since 5.4
  */
@@ -118,6 +133,7 @@ public final class MutableSpan implements Cloneable {
   /*
    * One of these objects is allocated for each in-flight span, so we try to be parsimonious on
    * things like array allocation and object reference size.
+   * 为每个正在进行的span分配一个这样的对象，因此我们尽量节约诸如数组分配和对象引用大小之类的东西。
    */
   String traceId, localRootId, parentId, id;
   Kind kind;
@@ -131,6 +147,8 @@ public final class MutableSpan implements Cloneable {
   // The below use object arrays instead of ArrayList. The intent is not for safe sharing
   // (copy-on-write), as this type is externally synchronized. In other words, this isn't
   // copy-on-write. We just grow arrays as we need to similar to how ArrayList does it.
+  // 下面使用对象数组而不是ArrayList。意图不是安全共享（写时复制），因为这种类型是外部同步的。
+  // 换句话说，这不是写时复制。我们只是根据需要增长数组，类似于ArrayList的方式。
   //
   // tags [(key, value)] annotations [(timestamp, value)]
   Object[] tags = EMPTY_ARRAY, annotations = EMPTY_ARRAY;
@@ -142,9 +160,11 @@ public final class MutableSpan implements Cloneable {
 
   /**
    * Creates a new instance from the given context, and defaults in the span.
+   * 从给定的上下文和span中的默认值创建一个新实例。
    *
    * <p><em>Note:</em> It is unexpected to have context properties also in the span defaults. The
    * context will win in this case, as opposed to throwing an exception.
+   * <p><em>注意：</em>在span默认值中也有上下文属性是意外的。在这种情况下，上下文将获胜，而不是抛出异常。
    *
    * @since 5.12
    */

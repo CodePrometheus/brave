@@ -37,11 +37,15 @@ class TracingTest {
       .currentTraceContext(StrictCurrentTraceContext.create())
       .addSpanHandler(spans).build()) {
       ScopedSpan parent = tracing.tracer().startScopedSpan("parent");
+      System.out.println("parent = " + parent);
 
       tracing.setNoop(true);
+      assertThat(parent.isNoop()).isFalse();
 
       // a new child retains sampled from parent even in noop
       brave.Span child = tracing.tracer().newChild(parent.context());
+      System.out.println("child = " + child);
+
       assertThat(child.context().sampled()).isTrue();
       assertThat(child.isNoop()).isTrue();
       child.finish();

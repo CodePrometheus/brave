@@ -44,6 +44,7 @@ public final class SamplerFunctions {
   /**
    * Ignores the argument and returns null. This is typically used to defer to the {@link
    * brave.Tracing#sampler() trace ID sampler}.
+   * 忽略参数并返回 null。这通常用于推迟到 {@link brave.Tracing#sampler() trace ID sampler}。
    *
    * @since 5.8
    */
